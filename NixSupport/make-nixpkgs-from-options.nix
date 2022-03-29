@@ -8,6 +8,7 @@
 , dontHaddockPackages ? []
 , nixPkgsRev ? "38da06c69f821af50323d54b28d342cc3eb42891"
 , nixPkgsSha256 ? "sha256-LUxcecUAujNSXkCLFog6rqr5acZUGGqCZ5wMQd4yuJw"
+#, nixPkgsSha256 ? "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
 , compiler ? "ghc8107"
 , manualOverrides ? haskellPackagesNew: haskellPackagesOld: { } # More exotic overrides go here
 , additionalNixpkgsOptions ? {}
@@ -41,6 +42,13 @@ let
   ihpDoJailbreakPackages = [];
   ihpDontHaddockPackages = [];
 
+  workaround140774 = haskellPackagesNew_self: haskellPackagesOld_super:
+    {
+      ormolu = pkgs.haskell.lib.overrideCabal haskellPackagesOld_super.ormolu (drv: {
+        enableSeparateBinOutput = false;
+      });
+    };
+
   config = {
     allowBroken = true;
     packageOverrides = pkgs: rec {
@@ -61,6 +69,8 @@ let
               (makeOverrides pkgs.haskell.lib.doJailbreak doJailbreakPackages)
               (makeOverrides pkgs.haskell.lib.dontHaddock dontHaddockPackages)
               manualOverrides
+
+              workaround140774
             ];
           };
         }
