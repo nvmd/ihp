@@ -59,6 +59,14 @@ ihpFlake:
                     type = lib.types.path;
                 };
 
+                withHoogle = lib.mkOption {
+                    description = ''
+                        Enable Hoogle support. Adds `hoogle` command to PATH.
+                    '';
+                    type = lib.types.bool;
+                    default = false;
+                };
+
                 dontCheckPackages = lib.mkOption {
                     description = ''
                         List of Haskell package names whose tests are skipped during build.
@@ -148,7 +156,9 @@ ihpFlake:
                 containers = lib.mkForce {};
 
                 languages.haskell.enable = true;
-                languages.haskell.package = ghcCompiler.ghc.withPackages cfg.haskellPackages;
+                languages.haskell.package = (if cfg.withHoogle
+                                             then ghcCompiler.ghc.withHoogle
+                                             else ghcCompiler.ghc.withPackages) cfg.haskellPackages;
 
                 scripts.start.exec = ''
                     ${ghcCompiler.ihp}/bin/RunDevServer
