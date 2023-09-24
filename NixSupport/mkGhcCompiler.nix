@@ -38,7 +38,7 @@ let
   ihpDoJailbreakPackages = [ "haskell-to-elm" "ip" "ghc-syntax-highlighter" "relude" "hs-brotli" "tuples" "singletons-th" "singletons-base" "inflections" "postgresql-simple" "with-utf8" "chell" ];
   ihpDontHaddockPackages = [ ];
 in ghcCompiler.override {
-  overrides = composeExtensionsList [
+  overrides = composeExtensionsList ([
     generatedOverrides
 
     # Overrides provided by IHP
@@ -53,6 +53,7 @@ in ghcCompiler.override {
     manualOverrides
 
     (self: super: { haskell-language-server = pkgs.haskell.lib.appendConfigureFlag super.haskell-language-server "--enable-executable-dynamic"; })
-    (self: super: { ormolu = if pkgs.system == "aarch64-darwin" then pkgs.haskell.lib.overrideCabal super.ormolu (_: { enableSeparateBinOutput = false; }) else super.ormolu; })
-  ];
+  ] ++ pkgs.lib.optionals (with pkgs.stdenv.hostPlatform; isAarch64 && isDarwin) [
+    (self: super: { ormolu = pkgs.haskell.lib.overrideCabal super.ormolu (_: { enableSeparateBinOutput = false; }); })
+  ]);
 }
