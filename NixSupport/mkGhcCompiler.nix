@@ -21,7 +21,8 @@ let
       makePackageSet = dir: pkgs.lib.mapAttrs' (toPackage dir) (builtins.readDir dir);
     in {
       "ihp" = ((haskellPackagesNew.callPackage "${toString ihp}/ihp.nix") { });
-    } // (makePackageSet haskellPackagesDir) // (makePackageSet "${ihp}/NixSupport/haskell-packages/.");
+    } // (makePackageSet haskellPackagesDir)
+      // (makePackageSet "${ihp}/NixSupport/haskell-packages/.");
 
   makeOverrides =
     function: names: haskellPackagesNew: haskellPackagesOld:
