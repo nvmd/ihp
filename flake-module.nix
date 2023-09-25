@@ -158,33 +158,29 @@ in {
                 ]
             );
             
+            prodServer = opts: import "${ihp}/NixSupport/default.nix" ({
+                inherit ihp;
+                pkgs = configuredPkgs;
+                allHaskellPackages = compilerWithPackages false;
+                otherDeps = p: cfg.packages;
+                projectPath = cfg.projectPath;
+                # Dev tools are not needed in the release build
+                includeDevTools = false;
+            } // opts );
+            
         in lib.mkIf cfg.enable {
             # release build package
             packages = {
                 default = self'.packages.unoptimized-prod-server;
 
-                optimized-prod-server = import "${ihp}/NixSupport/default.nix" {
-                    ihp = ihp;
-                    pkgs = configuredPkgs;
-                    allHaskellPackages = compilerWithPackages false;
-                    otherDeps = p: cfg.packages;
-                    projectPath = cfg.projectPath;
-                    # Dev tools are not needed in the release build
-                    includeDevTools = false;
+                optimized-prod-server = prodServer {
                     # Set optimized = true to get more optimized binaries, but slower build times
                     optimized = true;
                 };
 
-                unoptimized-prod-server = import "${ihp}/NixSupport/default.nix" {
-                    ihp = ihp;
-                    pkgs = configuredPkgs;
-                    allHaskellPackages = compilerWithPackages false;
-                    otherDeps = p: cfg.packages;
-                    projectPath = cfg.projectPath;
-                    includeDevTools = false;
+                unoptimized-prod-server = prodServer {
                     optimized = false;
                 };
-
 
                 migrate = pkgs.writeScriptBin "migrate" ''
                     ${ghcCompiler.ihp}/bin/migrate
