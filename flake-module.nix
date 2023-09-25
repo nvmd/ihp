@@ -143,13 +143,6 @@ in {
                 };
             } // cfg.additionalNixpkgsOptions);
 
-            compilerWithPackages = withHoogle: (if withHoogle
-                then ghcCompiler.ghc.withHoogle
-                else ghcCompiler.ghc.withPackages) (p: builtins.concatLists [
-                    (cfg.haskellPackages p)
-                ]
-            );
-            
             ghcCompiler = import "${ihp}/NixSupport/mkGhcCompiler.nix" {
                 pkgs = configuredPkgs;
                 inherit (cfg) ghcCompiler dontCheckPackages doJailbreakPackages dontHaddockPackages;
@@ -157,6 +150,14 @@ in {
                 haskellPackagesDir = cfg.projectPath + cfg.haskellPackagesDir;
                 manualOverrides = cfg.haskellManualOverrides;
             };
+
+            compilerWithPackages = withHoogle: (if withHoogle
+                then compilerWithOverrides.ghc.withHoogle
+                else compilerWithOverrides.ghc.withPackages) (p: builtins.concatLists [
+                    (cfg.haskellPackages p)
+                ]
+            );
+            
         in lib.mkIf cfg.enable {
             # release build package
             packages = {
