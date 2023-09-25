@@ -10,7 +10,8 @@ ihpFlake:
 # i.e. from the flake of any particular IHP app
 { inputs, flake-parts-lib, lib, config, ... }:
 
-{
+let compiler = "ghc944";
+in {
 
     imports = [
         inputs.devenv.flakeModule
@@ -18,15 +19,15 @@ ihpFlake:
 
     # the app can configure IHP using these options from its flake
     options.perSystem = flake-parts-lib.mkPerSystemOption (
-        { config, pkgs, system, ...}: {
-            options.ihp = {
+        { config, pkgs, system, ...}:
+            { options.ihp = {
                 enable = lib.mkEnableOption "Enable IHP support";
 
                 ghcCompiler = lib.mkOption {
                     description = ''
                         The GHC compiler to use for IHP.
                     '';
-                    default = pkgs.haskell.packages.ghc944;
+                    default = pkgs.haskell.packages.${compiler};
                 };
 
                 packages = lib.mkOption {
