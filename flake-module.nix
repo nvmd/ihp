@@ -60,6 +60,24 @@ in {
                     type = lib.types.path;
                 };
 
+                haskellPackagesDir = lib.mkOption {
+                    description = ''
+                        Path relative to `projectPath`.
+                        Migrated from app's `Config/nix/nixpkgs-config.nix`.
+                    '';
+                    type = lib.types.str;
+                    default = "/Config/nix/haskell-packages";
+                };
+
+                haskellManualOverrides = lib.mkOption {
+                    description = ''
+                        Allows more flexibility in overriding.
+                        Migrated from app's `Config/nix/nixpkgs-config.nix`.
+                    '';
+                    type = lib.types.anything;
+                    default = self: super: { };
+                };
+
                 withHoogle = lib.mkOption {
                     description = ''
                         Enable Hoogle support. Adds `hoogle` command to PATH.
@@ -109,7 +127,8 @@ in {
                 inherit pkgs;
                 inherit (cfg) ghcCompiler dontCheckPackages doJailbreakPackages dontHaddockPackages;
                 ihp = ihp;
-                haskellPackagesDir = cfg.projectPath + "/Config/nix/haskell-packages";
+                haskellPackagesDir = cfg.projectPath + cfg.haskellPackagesDir;
+                manualOverrides = cfg.haskellManualOverrides;
             };
         in lib.mkIf cfg.enable {
             # release build package
