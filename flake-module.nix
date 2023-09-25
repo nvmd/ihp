@@ -78,6 +78,16 @@ in {
                     default = self: super: { };
                 };
 
+                additionalNixpkgsOptions = lib.mkOption {
+                    description = ''
+                        Allows more flexibility in configuring nixpkgs
+                        for the project.
+                        Migrated from app's `Config/nix/nixpkgs-config.nix`.
+                    '';
+                    type = lib.types.anything;
+                    default = { };
+                };
+
                 withHoogle = lib.mkOption {
                     description = ''
                         Enable Hoogle support. Adds `hoogle` command to PATH.
@@ -117,14 +127,31 @@ in {
         perSystem = { self', lib, pkgs, system, config, ... }: let
             cfg = config.ihp;
             ihp = ihpFlake.inputs.self;
+
+            # nixpkgs of the IHP-based app, not IHP itself
+            configuredPkgs = import inputs.nixpkgs ({
+                inherit system;
+                config = {
+                    allowBroken = true;
+                    packageOverrides = pkgs: rec {
+                        haskell = pkgs.haskell // {
+                            packages = pkgs.haskell.packages // {
+                                "${compiler}" = ghcCompiler;
+                            };
+                        };
+                    };
+                };
+            } // cfg.additionalNixpkgsOptions);
+
             compilerWithPackages = withHoogle: (if withHoogle
                 then ghcCompiler.ghc.withHoogle
                 else ghcCompiler.ghc.withPackages) (p: builtins.concatLists [
                     (cfg.haskellPackages p)
                 ]
             );
+            
             ghcCompiler = import "${ihp}/NixSupport/mkGhcCompiler.nix" {
-                inherit pkgs;
+                pkgs = configuredPkgs;
                 inherit (cfg) ghcCompiler dontCheckPackages doJailbreakPackages dontHaddockPackages;
                 ihp = ihp;
                 haskellPackagesDir = cfg.projectPath + cfg.haskellPackagesDir;
@@ -137,6 +164,7 @@ in {
 
                 optimized-prod-server = import "${ihp}/NixSupport/default.nix" {
                     ihp = ihp;
+                    pkgs = configuredPkgs;
                     allHaskellPackages = compilerWithPackages false;
                     otherDeps = p: cfg.packages;
                     projectPath = cfg.projectPath;
@@ -148,6 +176,7 @@ in {
 
                 unoptimized-prod-server = import "${ihp}/NixSupport/default.nix" {
                     ihp = ihp;
+                    pkgs = configuredPkgs;
                     allHaskellPackages = compilerWithPackages false;
                     otherDeps = p: cfg.packages;
                     projectPath = cfg.projectPath;
