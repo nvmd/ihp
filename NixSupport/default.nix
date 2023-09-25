@@ -1,5 +1,4 @@
-{ pkgs ? import "${toString projectPath}/Config/nix/nixpkgs-config.nix" { inherit ihp additionalNixpkgsOptions; }
-, additionalNixpkgsOptions ? {}
+{ pkgs
 , ihp
 , allHaskellPackages
 , otherDeps ? (p: [])
