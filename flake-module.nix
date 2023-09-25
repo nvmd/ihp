@@ -99,6 +99,12 @@ in {
         perSystem = { self', lib, pkgs, system, config, ... }: let
             cfg = config.ihp;
             ihp = ihpFlake.inputs.self;
+            compilerWithPackages = withHoogle: (if withHoogle
+                then ghcCompiler.ghc.withHoogle
+                else ghcCompiler.ghc.withPackages) (p: builtins.concatLists [
+                    (cfg.haskellPackages p)
+                ]
+            );
             ghcCompiler = import "${ihp}/NixSupport/mkGhcCompiler.nix" {
                 inherit pkgs;
                 inherit (cfg) ghcCompiler dontCheckPackages doJailbreakPackages dontHaddockPackages;
@@ -112,7 +118,7 @@ in {
 
                 optimized-prod-server = import "${ihp}/NixSupport/default.nix" {
                     ihp = ihp;
-                    haskellDeps = cfg.haskellPackages;
+                    allHaskellPackages = compilerWithPackages false;
                     otherDeps = p: cfg.packages;
                     projectPath = cfg.projectPath;
                     # Dev tools are not needed in the release build
@@ -123,7 +129,7 @@ in {
 
                 unoptimized-prod-server = import "${ihp}/NixSupport/default.nix" {
                     ihp = ihp;
-                    haskellDeps = cfg.haskellPackages;
+                    allHaskellPackages = compilerWithPackages false;
                     otherDeps = p: cfg.packages;
                     projectPath = cfg.projectPath;
                     includeDevTools = false;
@@ -157,9 +163,7 @@ in {
                 containers = lib.mkForce {};
 
                 languages.haskell.enable = true;
-                languages.haskell.package = (if cfg.withHoogle
-                                             then ghcCompiler.ghc.withHoogle
-                                             else ghcCompiler.ghc.withPackages) cfg.haskellPackages;
+                languages.haskell.package = compilerWithPackages cfg.withHoogle;
 
                 scripts.start.exec = ''
                     ${ghcCompiler.ihp}/bin/RunDevServer
